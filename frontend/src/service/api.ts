@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { UserLogin, UserRegister } from "./api.type";
+import { UserLogin } from "./api.type";
 import { API_URL, API_ENDPOINT } from "./api.endpoint";
 
 // Create axios instance with base configuration

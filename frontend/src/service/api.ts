@@ -1,106 +1,115 @@
-import axios, { AxiosError } from "axios";
-import { UserLogin } from "./api.type";
+import axios, { AxiosResponse } from "axios";
 import { API_URL, API_ENDPOINT } from "./api.endpoint";
-
-// Create axios instance with base configuration
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-interface ErrorResponse {
-  message?: string;
-}
-
-// Add request interceptor for auth token
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Error handler
-const handleError = (error: AxiosError<ErrorResponse>) => {
-  const errorMessage = error.response?.data?.message || error.message;
-  throw new Error(errorMessage);
-};
-
-// Add to your existing interfaces
-interface RegisterResponse {
-  success: boolean;
-  data?: {
-    user: {
-      _id: string;
-      username: string;
-      email: string;
-      avatar?: string;
-    };
-    token: string;
-  };
-  message?: string;
-}
-
 export const api = {
-  login: async (data: UserLogin) => {
+  login: async (data: { email: string; password: string }) => {
     try {
-      const response = await axiosInstance.post(API_ENDPOINT.LOGIN, data);
-      console.log("*** response ***", response);
-      if (response.data?.data?.token) {
-        localStorage.setItem("token", response.data?.data?.token);
+      const res: AxiosResponse = await axios.post(
+        `${API_URL}${API_ENDPOINT.LOGIN}`,
+        data
+      );
+      if (res?.data?.data?.token) {
+        localStorage.setItem("token", res?.data?.data?.token);
       }
-      return response.data;
+      return res.data;
     } catch (error) {
-      return handleError(error as AxiosError<ErrorResponse>);
+      throw error;
     }
   },
-
   register: async (data: {
     username: string;
     email: string;
     password: string;
     avatar?: string;
-  }): Promise<RegisterResponse> => {
+  }) => {
     try {
-      const response = await axiosInstance.post<RegisterResponse>(
-        API_ENDPOINT.REGISTER,
-        data,
+      console.log("((()()()()()()()()()", data);
+
+      const res: AxiosResponse = await axios.post(
+        `${API_URL}${API_ENDPOINT.REGISTER}`,
+        data
+      );
+      console.log("*** res ***", res);
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  upload: async (data: { file: File }) => {
+    try {
+      const formData = new FormData();
+      formData.append("avatar", data.file);
+
+      const res: AxiosResponse = await axios.post(
+        `${API_URL}${API_ENDPOINT.UPLOAD}`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          withCredentials: true,
         }
       );
 
-      if (response.data?.data?.token) {
-        localStorage.setItem("token", response.data.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Upload failed");
       }
 
-      return response.data;
+      return res.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        throw new Error(error.response.data.message);
+      console.error("Upload error:", error);
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token");
       }
-      throw new Error("Registration failed. Please try again.");
+
+      const res: AxiosResponse = await axios.post(
+        `${API_URL}${API_ENDPOINT.LOGOUT}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return res.data;
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
+    }
+  },
+  message: async () => {
+    try {
+    } catch (error) {
+      throw error;
     }
   },
   getAllUsers: async () => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINT.USERS);
-      console.log("*** response ***", response);
-      return response.data;
-    } catch (error) {
-      return handleError(error as AxiosError<ErrorResponse>);
-    }
-  },
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token");
+      }
 
-  logout: () => {
-    localStorage.removeItem("token");
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      const res: AxiosResponse = await axios.get(
+        `${API_URL}${API_ENDPOINT.USERS}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
   },
 };

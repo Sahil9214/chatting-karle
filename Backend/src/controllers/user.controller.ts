@@ -8,10 +8,11 @@ export const getAllUsers = async (
   res: Response
 ): Promise<void> => {
   try {
-    const users = await User.find({})
+    // Exclude the current user and password field
+    const users = await User.find({ _id: { $ne: req.user._id } })
       .select("_id username avatar isOnline lastSeen")
       .lean();
-    console.log("Ram ram ");
+
     logger.info(`Found ${users.length} users`);
 
     res.status(200).json({

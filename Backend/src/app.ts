@@ -10,6 +10,7 @@ import { initializeSocket } from "./config/socket";
 import authRoutes from "./routes/auth.route";
 import chatRoutes from "./routes/chat.route";
 import userRoutes from "./routes/user.route";
+import uploadRoutes from "./routes/upload.route";
 // Load environment variables
 dotenvConfig();
 
@@ -35,7 +36,7 @@ app.use((req, _res, next) => {
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN || "http://localhost:9002",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -50,6 +51,7 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/upload", uploadRoutes);
 // Health check
 app.get("/health", (_req, res) => {
   res.status(200).json({

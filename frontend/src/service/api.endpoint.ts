@@ -7,4 +7,6 @@ export const API_ENDPOINT = {
   USERS: "/api/v1/users",
   PROFILE: "/api/v1/users/profile",
   CHAT: "/api/v1/chat",
+  LOGOUT: "/api/v1/auth/logout",
+  UPLOAD: "/api/v1/upload",
 } as const;

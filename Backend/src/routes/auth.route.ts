@@ -8,7 +8,7 @@
  */
 
 import express from "express";
-import { register, login } from "../controllers/auth.controller";
+import { register, login, logout } from "../controllers/auth.controller";
 import { auth } from "../middlewares/auth.middleware";
 
 const router = express.Router();
@@ -16,15 +16,16 @@ const router = express.Router();
 /**
  * Authentication Routes
  *
- * Base path: /api/auth
+ * Base path: /api/v1/auth
  * Available routes:
  * - POST /register: User registration
  * - POST /login: User authentication
+ * - POST /logout: User logout
  * - GET /me: Get current user (protected)
  */
 
 /**
- * @route   POST /api/auth/register
+ * @route   POST /api/v1/auth/register
  * @desc    Register a new user
  * @access  Public
  * @body    {username, email, password}
@@ -32,7 +33,7 @@ const router = express.Router();
 router.post("/register", register);
 
 /**
- * @route   POST /api/auth/login
+ * @route   POST /api/v1/auth/login
  * @desc    Authenticate user & get token
  * @access  Public
  * @body    {email, password}
@@ -40,7 +41,14 @@ router.post("/register", register);
 router.post("/login", login);
 
 /**
- * @route   GET /api/auth/me
+ * @route   POST /api/v1/auth/logout
+ * @desc    User logout
+ * @access  Private
+ */
+router.post("/logout", auth, logout);
+
+/**
+ * @route   GET /api/v1/auth/me
  * @desc    Get current user
  * @access  Private
  * @header  Authorization: Bearer <token>
@@ -61,10 +69,11 @@ export default router;
  *
  * In your main app.ts:
  * import authRoutes from './routes/auth.routes';
- * app.use('/api/auth', authRoutes);
+ * app.use('/api/v1/auth', authRoutes);
  *
  * API Usage:
- * 1. Register: POST /api/auth/register
- * 2. Login: POST /api/auth/login
- * 3. Get Profile: GET /api/auth/me
+ * 1. Register: POST /api/v1/auth/register
+ * 2. Login: POST /api/v1/auth/login
+ * 3. Logout: POST /api/v1/auth/logout
+ * 4. Get Profile: GET /api/v1/auth/me
  */

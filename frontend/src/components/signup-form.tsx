@@ -12,7 +12,7 @@ export default function SignupForm() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [avatar, setAvatar] = useState<string | null>('');
+  const [avatar, setAvatar] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,37 +23,61 @@ export default function SignupForm() {
     setLoading(true);
 
     try {
-      // Create FormData if there's an avatar
-      const formData = new FormData();
-      formData.append("username", username);
-      formData.append("email", email);
-      formData.append("password", password);
+      let avatarUrl = undefined;
       if (avatar) {
-        formData.append("avatar", avatar);
+        try {
+          const uploadResponse = await api.upload({ file: avatar });
+          if (!uploadResponse.success) {
+            throw new Error(uploadResponse.message || "Upload failed");
+          }
+          avatarUrl = uploadResponse.url;
+        } catch (err) {
+          console.error("Avatar upload failed:", err);
+          setError(err instanceof Error ? err.message : "Failed to upload profile picture");
+          setLoading(false);
+          return;
+        }
       }
 
       const response = await api.register({
         username,
         email,
         password,
-        avatar: avatar || undefined,
+        avatar: avatarUrl,
       });
 
       if (response.success) {
-        // Store user data and token
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-
-        // Redirect to chat
         router.push("/chat");
       } else {
         setError(response.message || "Registration failed");
       }
     } catch (err) {
-      console.error("Signup failed:", err);
+      console.error("Registration failed:", err);
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("File size must be less than 5MB");
+        return;
+      }
+
+      // Check file type
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        setError("Only JPEG and PNG files are allowed");
+        return;
+      }
+
+      setAvatar(file);
+      setError(null);
     }
   };
 
@@ -116,8 +140,9 @@ export default function SignupForm() {
           <Label htmlFor="avatar">Profile Picture (Optional)</Label>
           <Input
             id="avatar"
-            type="string"
-            onChange={(e) => setAvatar(e.target.value)}
+            type="file"
+            accept="image/jpeg,image/png"
+            onChange={handleFileChange}
             disabled={loading}
           />
           <p className="text-xs text-gray-500">

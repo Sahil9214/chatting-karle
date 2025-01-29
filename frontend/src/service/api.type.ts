@@ -1,9 +1,8 @@
 export interface UserRegister {
-  id: string;
   username: string;
   email: string;
-  avatar?: string | File;
   password: string;
+  avatar?: string;
 }
 
 export interface Message {

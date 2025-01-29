@@ -126,8 +126,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-
+    console.log("*** email ***", email);
+    console.log("*** password ***", password);
     // Input validation
+
     if (!email || !password) {
       logger.warn("Login failed: Missing credentials", {
         provided: { email: !!email, password: !!password },
@@ -190,6 +192,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: "An error occurred during login",
+    });
+  }
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user._id;
+
+    // Update user's online status
+    await User.findByIdAndUpdate(userId, {
+      isOnline: false,
+      lastSeen: new Date(),
+    });
+
+    logger.info("User logged out successfully:", { userId });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    logger.error("Logout error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to logout",
     });
   }
 };
